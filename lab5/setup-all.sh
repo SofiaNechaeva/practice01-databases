@@ -43,4 +43,4 @@ done
 
 bash lab5/setup-kafka.sh
 bash lab5/setup-connectors.sh
-echo 'Lab 5 PostgreSQL -> Kafka -> Neo4j is ready. Neo4j Browser: http://localhost:7474'
+echo 'Lab 5 PostgreSQL -> shared Kafka -> Neo4j and MongoDB are ready. Neo4j Browser: http://localhost:7474'

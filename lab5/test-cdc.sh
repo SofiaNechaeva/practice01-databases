@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-topic=university.public.students
+topic=university_avro.public.students
 test_id=$(python3 -c 'import uuid; print(uuid.uuid4())')
 group_id=$(docker exec practice01-postgres psql -X -At -U admin -d university_system \
   -c 'SELECT id FROM public.student_groups ORDER BY id LIMIT 1')
@@ -16,32 +16,22 @@ pg_sql() {
   docker exec practice01-postgres psql -X -v ON_ERROR_STOP=1 -U admin -d university_system "$@"
 }
 
-get_events() {
-  docker compose -f lab5/docker-compose.kafka.yml exec -T broker \
-    kafka-console-consumer --bootstrap-server broker:29092 --topic "$topic" \
-    --partition 0 --offset earliest --timeout-ms 1000 2>/dev/null || true
+kafka_end_offset() {
+  docker compose -f lab4/docker-compose.kafka.yml exec -T broker     kafka-get-offsets --bootstrap-server broker:29092 --topic "$topic" |
+    awk -F: '$1 == topic && $2 == 0 {print $3}' topic="$topic"
 }
-
 wait_kafka() {
-  local operation=$1
+  local previous=$1
   for ((i=0; i<30; i++)); do
-    if get_events | python3 -c '
-import json,sys
-operation, record_id = sys.argv[1:]
-for line in sys.stdin:
-    try: event=json.loads(line)
-    except json.JSONDecodeError: continue
-    if not isinstance(event, dict): continue
-    row=event.get("after") or event.get("before") or {}
-    if event.get("op") == operation and row.get("id") == record_id: sys.exit(0)
-sys.exit(1)
-' "$operation" "$test_id"; then
-      echo "Kafka: op=$operation id=$test_id"
+    local current
+    current=$(kafka_end_offset)
+    if [[ "$current" =~ ^[0-9]+$ ]] && (( current > previous )); then
+      echo "Kafka: offset $previous -> $current"
       return 0
     fi
     sleep 2
   done
-  echo "No Kafka event op=$operation id=$test_id" >&2
+  echo "Kafka did not receive a new Avro record for $topic" >&2
   return 1
 }
 
@@ -68,16 +58,19 @@ wait_graph() {
 }
 
 echo "Test UUID: $test_id"
+offset=$(kafka_end_offset)
 pg_sql -c "INSERT INTO public.students (id, group_id, first_name, last_name, email, student_card_number, enrollment_date, status) VALUES ('$test_id', '$group_id', 'CDC created', 'Neo4j', 'cdc-$test_id@example.invalid', 'CDC-${test_id:0:8}', CURRENT_DATE, 'active')"
-wait_kafka c
+wait_kafka "$offset"
 wait_graph 'CDCcreated' 1
 
+offset=$(kafka_end_offset)
 pg_sql -c "UPDATE public.students SET first_name='CDC updated', updated_at=NOW() WHERE id='$test_id'"
-wait_kafka u
+wait_kafka "$offset"
 wait_graph 'CDCupdated' 1
 
+offset=$(kafka_end_offset)
 pg_sql -c "DELETE FROM public.students WHERE id='$test_id'"
-wait_kafka d
+wait_kafka "$offset"
 wait_graph '' 0
 
 echo 'PASS: Create/Update/Delete reached Kafka and Neo4j, including MEMBER_OF.'

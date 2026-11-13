@@ -3,11 +3,10 @@
   "config": {
     "connector.class": "org.neo4j.connectors.kafka.sink.Neo4jConnector",
     "tasks.max": "1",
-    "topics": "university.public.universities,university.public.institutes,university.public.departments,university.public.student_groups,university.public.students,university.public.lecture_courses,university.public.lectures,university.public.schedule,university.public.schedule_groups",
+    "topics": "university_avro.public.universities,university_avro.public.institutes,university_avro.public.departments,university_avro.public.student_groups,university_avro.public.students,university_avro.public.lecture_courses,university_avro.public.lectures,university_avro.public.schedule,university_avro.public.schedule_groups",
     "key.converter": "org.apache.kafka.connect.json.JsonConverter",
     "key.converter.schemas.enable": "false",
-    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
-    "value.converter.schemas.enable": "false",
+    "value.converter": "io.confluent.connect.avro.AvroConverter",
     "neo4j.uri": "bolt://host.docker.internal:7687",
     "neo4j.authentication.type": "BASIC",
     "neo4j.authentication.basic.username": "neo4j",
@@ -17,17 +16,18 @@
     "neo4j.cypher.bind-header-as": "",
     "neo4j.cypher.bind-key-as": "",
     "neo4j.cypher.bind-value-as": "__value",
-    "neo4j.cypher.bind-value-as-event": "false"
+    "neo4j.cypher.bind-value-as-event": "false",
+    "value.converter.schema.registry.url": "http://schema-registry:8081"
   },
   "cypher_files": {
-    "university.public.universities": "lab5/cypher/universities.cypher",
-    "university.public.institutes": "lab5/cypher/institutes.cypher",
-    "university.public.departments": "lab5/cypher/departments.cypher",
-    "university.public.student_groups": "lab5/cypher/student_groups.cypher",
-    "university.public.students": "lab5/cypher/students.cypher",
-    "university.public.lecture_courses": "lab5/cypher/lecture_courses.cypher",
-    "university.public.lectures": "lab5/cypher/lectures.cypher",
-    "university.public.schedule": "lab5/cypher/schedule.cypher",
-    "university.public.schedule_groups": "lab5/cypher/schedule_groups.cypher"
+    "university_avro.public.universities": "lab5/cypher/universities.cypher",
+    "university_avro.public.institutes": "lab5/cypher/institutes.cypher",
+    "university_avro.public.departments": "lab5/cypher/departments.cypher",
+    "university_avro.public.student_groups": "lab5/cypher/student_groups.cypher",
+    "university_avro.public.students": "lab5/cypher/students.cypher",
+    "university_avro.public.lecture_courses": "lab5/cypher/lecture_courses.cypher",
+    "university_avro.public.lectures": "lab5/cypher/lectures.cypher",
+    "university_avro.public.schedule": "lab5/cypher/schedule.cypher",
+    "university_avro.public.schedule_groups": "lab5/cypher/schedule_groups.cypher"
   }
 }

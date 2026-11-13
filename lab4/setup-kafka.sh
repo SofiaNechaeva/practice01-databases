@@ -19,11 +19,13 @@ plugins = {item["class"] for item in json.load(sys.stdin)}
 required = {
     "io.debezium.connector.postgresql.PostgresConnector",
     "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
+    "org.neo4j.connectors.kafka.sink.Neo4jConnector",
+    "com.mongodb.kafka.connect.MongoSinkConnector",
 }
 missing = required - plugins
 if missing:
     raise SystemExit(f"Missing Kafka Connect plugins: {sorted(missing)}")
-print("Debezium and Elasticsearch Sink plugins are available")
+print("Debezium, Elasticsearch, Neo4j and MongoDB Sink plugins are available")
 '
 
-echo 'Kafka, Schema Registry, Kafka Connect and Kafka UI are ready.'
+echo 'Shared Kafka, Schema Registry, Kafka Connect and Kafka UI for Lab4/Lab5 are ready.'

@@ -27,7 +27,7 @@ docker compose -f docker-compose.lab.yml up -d --build
 В консоли выберите `2`, `3`, `4` или `5` для отчётов ЛР1, ЛР2, ЛР3 или запуска всех трёх.
 
 ## Лабораторная 4: CDC
-
+Перед запуском остановите контейнер pgadmin, так как занимает порт 8083.
 ```bash
 bash lab4/setup-all.sh
 bash lab4/setup-redis.sh
@@ -44,4 +44,16 @@ bash lab4/test-redis.sh
 ```bash
 docker compose -f docker-compose.lab.yml logs --tail=100
 docker compose -f all-in-one/docker-compose.yaml down
+```
+## Лабораторная 5
+```bash
+bash lab5/setup-all.sh
+```
+Neo4j:  
+```bash
+bash lab5/test-cdc.sh
+```
+Mongodb:  
+```bash
+bash lab5/test-mongodb-cdc.sh
 ```

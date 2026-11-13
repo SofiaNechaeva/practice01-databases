@@ -31,8 +31,8 @@ services:
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
   kafka-connect:
     build:
-      context: .
-      dockerfile: Dockerfile.connect
+      context: ..
+      dockerfile: lab4/Dockerfile.connect
     depends_on:
       - broker
       - schema-registry

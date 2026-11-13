@@ -11,9 +11,9 @@ docker exec practice01-postgres psql -U admin -d university_system -c \
   'manual-$TEST_ID@example.invalid', 'MANUAL-${TEST_ID:0:8}', CURRENT_DATE, 'active')"
 
 ## Увидеть событие в kafka - сразу в другом терминале:
-docker compose -f lab5/docker-compose.kafka.yml exec -T broker \
-  kafka-console-consumer --bootstrap-server broker:29092 \
-  --topic university.public.students --from-beginning --timeout-ms 3000 \
+docker compose -f lab4/docker-compose.kafka.yml exec -T broker \
+  kafka-avro-console-consumer --bootstrap-server broker:29092 --property schema.registry.url=http://schema-registry:8081 \
+  --topic university_avro.public.students --from-beginning --timeout-ms 3000 \
   | grep "$TEST_ID"
 
 ## Проверить Neo4j:
@@ -42,7 +42,7 @@ docker exec practice01-mongodb mongosh --quiet -u appuser -p appsecret \
   --authenticationDatabase admin \
   --eval "db.getSiblingDB('university_system').university_hierarchy_cdc.findOne()"
 
-Если иерархия не отображается полностью:  
+Если иерархия не отображается полностью:
 
 docker exec practice01-postgres psql -U admin -d university_system -c \
 "UPDATE public.universities SET updated_at = NOW()"

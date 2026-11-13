@@ -6,11 +6,11 @@
     "connection.uri": "mongodb://appuser:appsecret@host.docker.internal:27017/?authSource=admin",
     "database": "university_system",
     "collection": "students_cdc",
-    "topics": "university.public.students",
+    "topics": "university_avro.public.students",
     "change.data.capture.handler": "com.mongodb.kafka.connect.sink.cdc.debezium.rdbms.postgres.PostgresHandler",
     "key.converter": "org.apache.kafka.connect.json.JsonConverter",
     "key.converter.schemas.enable": "false",
-    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
-    "value.converter.schemas.enable": "false"
+    "value.converter": "io.confluent.connect.avro.AvroConverter",
+    "value.converter.schema.registry.url": "http://schema-registry:8081"
   }
 }

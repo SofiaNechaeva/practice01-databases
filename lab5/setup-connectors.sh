@@ -2,7 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-connect_url=http://localhost:8085
+connect_url=http://localhost:8083
 register_connector() {
   local file=$1 name=$2
   python3 -c '
@@ -31,11 +31,10 @@ raise SystemExit(not (d["connector"]["state"] == "RUNNING" and d["tasks"] and al
   echo "$name did not reach RUNNING" >&2; return 1
 }
 
-register_connector lab5/postgres-source.json lab5-postgres-wal2json
+bash lab4/setup-source.sh
 register_connector lab5/neo4j-sink.json lab5-neo4j-sink
 register_connector lab5/mongodb-sink.json lab5-mongodb-students-cdc
 register_connector lab5/mongodb-hierarchy-sink.json lab5-mongodb-university-hierarchy
-wait_running lab5-postgres-wal2json
 wait_running lab5-neo4j-sink
 wait_running lab5-mongodb-students-cdc
 wait_running lab5-mongodb-university-hierarchy
