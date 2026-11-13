@@ -3,10 +3,6 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."  # Далее пути считаются от корня проекта.
 
-# Compose подключает этот файл в контейнер PostgreSQL только для чтения.
-test -r postgres/postgresql.conf || { echo 'Missing postgres/postgresql.conf' >&2; exit 1; }
-chmod a+r postgres/postgresql.conf
-
 # Собрать PostgreSQL 16 с wal2json и дождаться проверки готовности Compose.
 docker compose -f all-in-one/docker-compose.yaml up \
   --build --no-deps --wait --wait-timeout 180 postgres
@@ -42,3 +38,5 @@ if [ "$all_tables" -eq 0 ]; then
   pg_sql -c 'CREATE PUBLICATION pub FOR ALL TABLES'
 fi
 echo 'PostgreSQL 16, wal2json, postgresql.conf and publication pub are ready.'
+
+

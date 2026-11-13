@@ -15,14 +15,15 @@ register_connector() {
       --data-binary @- "$connect_url/connectors/$name/config" >/dev/null
 }
 
-# Удалить старый источник, если он остался от предыдущей версии лабораторной.
-if curl -fsS "$connect_url/connectors/lab4-postgres-source/status" >/dev/null 2>&1; then
-  curl --fail-with-body -sS -X DELETE \
-    "$connect_url/connectors/lab4-postgres-source" >/dev/null
-fi
+# Удалить прежние JSON-коннекторы: они больше не должны писать в те же приёмники.
+for old in lab4-postgres-source lab4-postgres-wal2json lab4-elasticsearch-sink lab4-redis-students; do
+  if curl -fsS "$connect_url/connectors/$old/status" >/dev/null 2>&1; then
+    curl --fail-with-body -sS -X DELETE "$connect_url/connectors/$old" >/dev/null
+  fi
+done
 
 # Применить два конфига; помощник дождётся запуска каждой задачи.
-register_connector lab4/postgres-source.json lab4-postgres-wal2json
-register_connector lab4/elasticsearch-sink.json lab4-elasticsearch-sink
-python3 lab4/wait-for-connector.py lab4-postgres-wal2json
-python3 lab4/wait-for-connector.py lab4-elasticsearch-sink
+register_connector lab4/postgres-source.json lab4-postgres-avro
+register_connector lab4/elasticsearch-sink.json lab4-elasticsearch-avro-sink
+python3 lab4/wait-for-connector.py lab4-postgres-avro
+python3 lab4/wait-for-connector.py lab4-elasticsearch-avro-sink

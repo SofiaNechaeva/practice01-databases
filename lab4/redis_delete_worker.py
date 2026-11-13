@@ -4,6 +4,9 @@ import time
 
 import redis
 from confluent_kafka import Consumer
+from confluent_kafka.schema_registry import SchemaRegistryClient
+from confluent_kafka.schema_registry.avro import AvroDeserializer
+from confluent_kafka.serialization import MessageField, SerializationContext
 
 
 # Compose передаёт имя топика и параметры подключения к Redis.
@@ -25,6 +28,8 @@ consumer = Consumer(
     }
 )
 consumer.subscribe([topic])
+registry = SchemaRegistryClient({"url": os.environ["SCHEMA_REGISTRY_URL"]})
+decode_value = AvroDeserializer(registry)
 
 # Читать CDC-события всё время работы контейнера.
 while True:
@@ -37,7 +42,7 @@ while True:
         continue
     try:
         # Debezium кладёт удалённую строку в before и устанавливает op=d.
-        event = json.loads(message.value()) if message.value() else None
+        event = decode_value(message.value(), SerializationContext(topic, MessageField.VALUE)) if message.value() else None
         if event and event.get("op") == "d":
             row = event.get("before") or {}
             student_id = row.get("id")

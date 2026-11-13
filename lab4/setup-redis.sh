@@ -33,12 +33,12 @@ print("Redis Sink plugin is available")
 # Подписать sink только на students: он создаёт и обновляет записи кэша.
 python3 -c 'import json; print(json.dumps(json.load(open("lab4/redis-sink.json"))["config"]))' |
   curl --fail-with-body -sS -X PUT -H 'Content-Type: application/json' \
-    --data-binary @- http://localhost:8083/connectors/lab4-redis-students/config >/dev/null
+    --data-binary @- http://localhost:8083/connectors/lab4-redis-avro-students/config >/dev/null
 
 # Отдельный Kafka consumer обрабатывает удаления, которые здесь не делает Lenses Sink.
 docker compose -f "$compose" --profile redis up \
   -d --build --no-deps redis-delete-worker
 
 # Задача коннектора запускается не сразу; дождаться состояния RUNNING.
-python3 lab4/wait-for-connector.py lab4-redis-students
+python3 lab4/wait-for-connector.py lab4-redis-avro-students
 echo 'Redis sink and delete worker started.'
