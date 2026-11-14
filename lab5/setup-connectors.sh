@@ -11,7 +11,6 @@ from pathlib import Path
 payload = json.load(open(sys.argv[1]))
 config = payload["config"]
 for topic, query_file in payload.get("cypher_files", {}).items():
-    # Kafka Connect получает одну строку, но исходный Cypher хранится читаемо.
     config[f"neo4j.cypher.topic.{topic}"] = " ".join(Path(query_file).read_text().split())
 json.dump(config, sys.stdout)
 ' "$file" |

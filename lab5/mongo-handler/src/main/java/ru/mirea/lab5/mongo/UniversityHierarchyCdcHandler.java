@@ -43,9 +43,23 @@ public final class UniversityHierarchyCdcHandler extends CdcHandler {
         if (deleted) return Optional.of(new DeleteOneModel<>(idFilter(universityId)));
         break;
       case "institutes":
-        universityId = string(row, "university_id"); update(institutes, id, row, deleted); break;
+        // With REPLICA IDENTITY DEFAULT, a DELETE event may contain only the
+        // primary key in before. Resolve the parent from the cached full row
+        // before removing that row from the cache.
+        BsonDocument oldInstitute = institutes.get(id);
+        universityId = deleted
+            ? (oldInstitute == null ? null : string(oldInstitute, "university_id"))
+            : string(row, "university_id");
+        update(institutes, id, row, deleted);
+        break;
       case "departments":
-        update(departments, id, row, deleted); universityId = universityForInstitute(string(row, "institute_id")); break;
+        BsonDocument oldDepartment = departments.get(id);
+        String instituteId = deleted
+            ? (oldDepartment == null ? null : string(oldDepartment, "institute_id"))
+            : string(row, "institute_id");
+        update(departments, id, row, deleted);
+        universityId = universityForInstitute(instituteId);
+        break;
       default: return Optional.empty();
     }
     if (universityId == null || !universities.containsKey(universityId)) return Optional.empty();

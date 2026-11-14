@@ -10,11 +10,15 @@ docker exec practice01-postgres psql -U admin -d university_system -c \
  ('$TEST_ID', '$GROUP_ID', 'Manual created', 'CDC',
   'manual-$TEST_ID@example.invalid', 'MANUAL-${TEST_ID:0:8}', CURRENT_DATE, 'active')"
 
-## Увидеть событие в kafka - сразу в другом терминале:
+## Проверить публикацию в Kafka:
+
+Avro-сообщения не выводятся штатным console consumer как JSON. До и после операции сравните end offset топика:
+
+~~~bash
 docker compose -f lab4/docker-compose.kafka.yml exec -T broker \
-  kafka-avro-console-consumer --bootstrap-server broker:29092 --property schema.registry.url=http://schema-registry:8081 \
-  --topic university_avro.public.students --from-beginning --timeout-ms 3000 \
-  | grep "$TEST_ID"
+  kafka-get-offsets --bootstrap-server broker:29092 \
+  --topic university_avro.public.students
+~~~
 
 ## Проверить Neo4j:
 docker exec practice01-neo4j cypher-shell -u neo4j -p neo4jsecret \
@@ -50,3 +54,31 @@ docker exec practice01-postgres psql -U admin -d university_system -c \
 "UPDATE public.institutes SET updated_at = NOW()"
 docker exec practice01-postgres psql -U admin -d university_system -c \
 "UPDATE public.departments SET updated_at = NOW()"
+
+## Автоматическая проверка MongoDB-иерархии
+
+~~~bash
+bash lab5/test-mongodb-hierarchy-cdc.sh
+~~~
+
+Скрипт выводит UUID временных университета, института и кафедры. Пока тест выполняется, их вложенный документ можно посмотреть так:
+
+~~~bash
+export HIERARCHY_UNIVERSITY_ID='<UUID из Test university>'
+export HIERARCHY_INSTITUTE_ID='<UUID из Test institute>'
+export HIERARCHY_DEPARTMENT_ID='<UUID из Test department>'
+
+docker exec practice01-mongodb mongosh --quiet -u appuser -p appsecret   --authenticationDatabase admin   --eval "db.getSiblingDB('university_system').university_hierarchy_cdc.findOne({_id:'$HIERARCHY_UNIVERSITY_ID'})"
+~~~
+
+Проверка кафедры после Create или Update:
+
+~~~bash
+docker exec practice01-mongodb mongosh --quiet -u appuser -p appsecret   --authenticationDatabase admin   --eval "const d=db.getSiblingDB('university_system').university_hierarchy_cdc.findOne({_id:'$HIERARCHY_UNIVERSITY_ID'}); printjson(d.institutes['$HIERARCHY_INSTITUTE_ID'].departments['$HIERARCHY_DEPARTMENT_ID'])"
+~~~
+
+После Delete кафедры или института соответствующее поле отсутствует; после Delete университета запрос вернёт null:
+
+~~~bash
+docker exec practice01-mongodb mongosh --quiet -u appuser -p appsecret   --authenticationDatabase admin   --eval "db.getSiblingDB('university_system').university_hierarchy_cdc.findOne({_id:'$HIERARCHY_UNIVERSITY_ID'})"
+~~~
